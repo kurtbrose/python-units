@@ -16,7 +16,23 @@ def invert(u):
     return res
 
 def unit(units):
-    name = "*".join([k.__name__+"**"+str(v) for k,v in units.items()])
+    num = [(k,v) for k,v in units.items() if v > 0]
+    den = [(k,v) for k,v in units.items() if v < 0]
+    numerator = "*".join([k.abbreviation+("**"+str(v) if v != 1 else "")
+                          for k,v in num])
+    if len(den) != 0:
+        if len(num) > 1:
+            numerator = "("+numerator+")"
+        denominator = "*".join([k.abbreviation+("**"+str(-v) if v != -1 else "")
+                                for k,v in den])
+        if len(den) > 1:
+            denominator = "("+denominator+")"
+        if len(num) != 0:
+            name = "*"+numerator+"/"+denominator
+        else:
+            name = "/"+denominator
+    else:
+        name = "*"+numerator
     return UnitMeta(name, (Unitless,), {"units":units})
 
 class UnitMeta(type):

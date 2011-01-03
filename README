@@ -1,9 +1,36 @@
 >>> from units import *
+
+Units are represented by classes.  For example, meter, kilogram, and second
+are all classes in the units module.  Like int and str, instances of these classes
+are immutable.
+
+Arithmetic on units returns other units of the appropriate class.
+
+>>> m*m
+<class 'units.*m**2'>
+
+The units library understands the difference between base units and derived
+units, and is a little bit smart about how it treats them.
+
 >>> kg*m/s**2
 <class 'units.Newton'>
+>>> N*m
+<class 'units.Joule'>
+>>> J/s
+<class 'units.Watt'>
+
+Multiplying a unit times anything will result in an instance of that unit, holding
+onto the value.
+
 >>> 5*m
 5*m
+
+Multiplying that instance by something else will multiply the value.
+
 >>> 5*m*2.5
 12.5*m
+
+Multiplying two unit instances together will multiply their valus and classes.
+
 >>> meter(5)**2
 25*meter**2
