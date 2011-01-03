@@ -1,0 +1,7 @@
+>>> from units import *
+>>> kg*m/s**2
+<class 'units.Newton'>
+>>> 5*m
+5*m
+>>> 5*m*2.5
+12.5*m

@@ -16,7 +16,8 @@ def invert(u):
     return res
 
 def unit(units):
-    return UnitMeta("unit", (Unitless,), {"units":units})
+    name = "*".join([k.__name__+"**"+str(v) for k,v in units.items()])
+    return UnitMeta(name, (Unitless,), {"units":units})
 
 class UnitMeta(type):
     BaseUnit = None #breaking circular reference
@@ -61,6 +62,10 @@ class UnitMeta(type):
 class BaseUnit(object):
     __metaclass__ = UnitMeta
     
+    @property
+    def abbreviation(self):
+        return self.__class__.__name__
+    
     def __init__(self, value):
         self.value = value
     
@@ -79,9 +84,7 @@ class BaseUnit(object):
             return (self.__class__ * other.__class__)(self.value*other.value)
         elif isinstance(other, UnitMeta):
             return UnitMeta.__mul__(other, self)
-        elif isinstance(other, (int, long, float)):
-            return self.__class__(self.value*other)
-        raise TypeError() #figure out a good error message
+        return self.__class__(self.value*other)
     
     __rmul__ = __mul__
     
@@ -93,6 +96,9 @@ class BaseUnit(object):
     
     def __pow__(self, pow):
         return (self.__class__**pow)(self.value**pow)
+    
+    def __repr__(self):
+        return repr(self.value)+"*"+self.abbreviation
 
 class Unitless(BaseUnit):
     units = {}
@@ -100,9 +106,23 @@ class Unitless(BaseUnit):
 UnitMeta._unit_type_reg[frozenset([])] = Unitless
 UnitMeta.BaseUnit = BaseUnit
     
-class meter(BaseUnit): pass
+class meter   (BaseUnit): abbreviation = "m"
+class second  (BaseUnit): abbreviation = "s"
+class kilogram(BaseUnit): abbreviation = "kg"
+class Ampere  (BaseUnit): abbreviation = "A"
+class mole    (BaseUnit): abbreviation = "mol"
+class kelvin  (BaseUnit): abbreviation = "K" 
+class candela (BaseUnit): abbreviation = "cd"
+m = meter; s = second; kg = kilogram; A = Ampere; mol = mole
+K = kelvin; cd = candela
 
-class second(BaseUnit): pass
-
-
-
+class Newton(Unitless):
+    units = {kilogram:1, meter:1, second:-2}
+    abbreviation = "N"
+N = Newton
+Joule   = N * m  ; Joule  .__name__ = "Joule"  ; Joule  .abbreviation = "J"
+J = Joule
+Watt    = J / s  ; Watt   .__name__ = "Watt"   ; Watt   .abbreviation = "W"
+W = Watt
+Coloumb = A * s  ; Coloumb.__name__ = "Coloumb"; Coloumb.abbreviation = "C"
+C = Coloumb
