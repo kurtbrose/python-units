@@ -18,12 +18,12 @@ def invert(u):
 def unit(units):
     num = [(k,v) for k,v in units.items() if v > 0]
     den = [(k,v) for k,v in units.items() if v < 0]
-    numerator = "*".join([k.abbreviation+("**"+str(v) if v != 1 else "")
+    numerator = "*".join([k.abbrev()+("**"+str(v) if v != 1 else "")
                           for k,v in num])
     if len(den) != 0:
         if len(num) > 1:
             numerator = "("+numerator+")"
-        denominator = "*".join([k.abbreviation+("**"+str(-v) if v != -1 else "")
+        denominator = "*".join([k.abbrev()+("**"+str(-v) if v != -1 else "")
                                 for k,v in den])
         if len(den) > 1:
             denominator = "("+denominator+")"
@@ -72,13 +72,20 @@ class UnitMeta(type):
     
     def __pow__(cls, pow):
         return unit(dict([(k,pow*v) for k,v in cls.units.items()]))
+    
+    def __reduce__(cls):
+        #this will work once issue 7689 is fixed http://bugs.python.org/issue7689
+        return UnitMeta, (cls.__name__, cls.__bases__, cls.__dict__)
+
+def unit_unpickler(value, *a):
+    return UnitMeta(*a)(value)
 
 class BaseUnit(object):
     __metaclass__ = UnitMeta
     
-    @property
-    def abbreviation(self):
-        return self.__class__.__name__
+    @classmethod
+    def abbrev(cls):
+        return getattr(cls, "abbreviation", cls.__name__)
     
     def __init__(self, value):
         self.value = value
@@ -112,13 +119,19 @@ class BaseUnit(object):
         return (self.__class__**pow)(self.value**pow)
     
     def __repr__(self):
-        return repr(self.value)+"*"+self.abbreviation
+        return repr(self.value)+"*"+self.abbrev()
+    
+    def __reduce__(self):
+        return unit_unpickler, (self.value,
+                                self.__class__.__name__,
+                                self.__class__.__bases__,
+                                dict(self.__class__.__dict__))
     
     __array_priority__ = 10.0 #for numpy compatibility -- ensure [1,2]*m not [1*m, 2*m]
 
 class Derived(BaseUnit):
     def __repr__(self):
-        return repr(self.value)+self.abbreviation
+        return repr(self.value)+self.abbrev()
 
 class Unitless(Derived):
     units = {}
