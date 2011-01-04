@@ -30,7 +30,7 @@ Multiplying that instance by something else will multiply the value.
 >>> 5*m*2.5
 12.5*m
 
-Multiplying two unit instances together will multiply their valus and classes.
+Multiplying two unit instances together will multiply their values and classes.
 
 >>> meter(5)**2
 25*meter**2

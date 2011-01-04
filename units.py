@@ -33,7 +33,7 @@ def unit(units):
             name = "/"+denominator
     else:
         name = "*"+numerator
-    return UnitMeta(name, (Unitless,), {"units":units})
+    return UnitMeta(name, (Derived,), {"units":units})
 
 class UnitMeta(type):
     BaseUnit = None #breaking circular reference
@@ -137,7 +137,7 @@ class candela (BaseUnit): abbreviation = "cd"
 m = meter; s = second; kg = kilogram; A = Ampere; mol = mole
 K = kelvin; cd = candela
 
-class Newton(Unitless):
+class Newton(Derived):
     units = {kilogram:1, meter:1, second:-2}
     abbreviation = "N"
 N = Newton
