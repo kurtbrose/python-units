@@ -83,16 +83,6 @@ Instances of units are pickle-able, although the unit classes themselves are not
 >>> pickle.loads(pickle.dumps(3*m*m))
 3*m**2
 
-Although this should not be necessary, users can create new base units simply by
-inheriting from BaseUnit.  These user created classes also pickle correctly.
-
->>> class flimflam(BaseUnit): pass
-...
->>> flimflam*2
-2*flimflam
->>> pickle.loads(pickle.dumps(2*m*flimflam))
-2*flimflam*m
-
 Unitless values get unwrapped.  That is, an expression that would result in a unitless
 value instead just returns the value.
 
