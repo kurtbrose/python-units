@@ -34,3 +34,66 @@ Multiplying two unit instances together will multiply their valus and classes.
 
 >>> meter(5)**2
 25*meter**2
+
+Addition and subtraction between incompatible units causes an exception to be thrown.
+
+>>> 1*s + 1*m
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "units.py", line 89, in __add__
+    raise TypeError() #figure out good error message
+TypeError
+
+The library 'plays nice' with many other libraries, since it doesn't require any
+specific type for the values it is wrapping.  Anything that supports the arithmetic
+operators will do.
+
+Here is an example of combining python-units with the SymPy library to do symbolic math
+with physical units:
+
+>>> import sympy
+>>> import units
+>>> x = sympy.Symbol('x')
+>>> y = sympy.Symbol('y')
+>>> x*units.meter
+x*m
+>>> x*units.meter + y*units.meter
+x + y*m
+
+And here is an example of combining python-units with the NumPy library to do fast
+numerical computation with units:
+
+>>> import numpy
+>>> a = numpy.array([[1,2],[3,4]])
+>>> a
+array([[1, 2],
+       [3, 4]])
+>>> am = units.meter*a
+>>> am
+array([[1, 2],
+       [3, 4]])*m
+>>> am*2
+array([[2,4],
+       [6,8]])*m
+
+Note, if using units with numpy be sure to left multiply in order to get the
+efficiency benefits of numpy.  Unfortunately, right multiply will call the
+numpy.array __mul__, which will result in an array full of unit objects.
+
+>>> a*units.meter
+array([[1*m, 2*m],
+       [3*m, 4*m]], dtype=object)
+
+Unitless values get unwrapped.  That is, an expression that would result in a unitless
+value instead just returns the value.
+
+>>> L = 5 * units.meter
+>>> L
+5*m
+>>> L / units.meter
+5
+
+This is for use cases such as applying trigonometric functions to values.  In general,
+it is only physically valid to pass unitless numbers to arbitrary functions.
+
+((Note: still iffy on this -- is it better to return an instance of Unitless for consistency?))

@@ -60,9 +60,7 @@ class UnitMeta(type):
             if isinstance(other, cls.BaseUnit):
                 return newcls(other.value)
             return newcls
-        elif isinstance(other, (int, long, float)):
-            return cls(other)
-        raise TypeError() #figure out good error message
+        return cls(other)
 
     __mul__ = __rmul__
     
@@ -116,8 +114,15 @@ class BaseUnit(object):
     def __repr__(self):
         return repr(self.value)+"*"+self.abbreviation
 
-class Unitless(BaseUnit):
+class Derived(BaseUnit):
+    def __repr__(self):
+        return repr(self.value)+self.abbreviation
+
+class Unitless(Derived):
     units = {}
+    
+    def __new__(cls, value):
+        return value #Unitless things get unwrapped
 
 UnitMeta._unit_type_reg[frozenset([])] = Unitless
 UnitMeta.BaseUnit = BaseUnit
