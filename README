@@ -68,21 +68,13 @@ numerical computation with units:
 >>> a
 array([[1, 2],
        [3, 4]])
->>> am = units.meter*a
+>>> am = a*units.meter
 >>> am
 array([[1, 2],
        [3, 4]])*m
->>> am*2
+>>> am*2/units.meter
 array([[2,4],
-       [6,8]])*m
-
-Note, if using units with numpy be sure to left multiply in order to get the
-efficiency benefits of numpy.  Unfortunately, right multiply will call the
-numpy.array __mul__, which will result in an array full of unit objects.
-
->>> a*units.meter
-array([[1*m, 2*m],
-       [3*m, 4*m]], dtype=object)
+       [6,8]])
 
 Unitless values get unwrapped.  That is, an expression that would result in a unitless
 value instead just returns the value.

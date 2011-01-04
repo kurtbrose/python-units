@@ -113,6 +113,8 @@ class BaseUnit(object):
     
     def __repr__(self):
         return repr(self.value)+"*"+self.abbreviation
+    
+    __array_priority__ = 10.0 #for numpy compatibility -- ensure [1,2]*m not [1*m, 2*m]
 
 class Derived(BaseUnit):
     def __repr__(self):
