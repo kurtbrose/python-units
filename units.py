@@ -132,6 +132,8 @@ class UnitMeta(type):
         return (cls**-1)*other
     
     def __pow__(cls, pow):
+        if pow == 0:
+            return Unitless
         return unit(cls.scale**pow, dict([(k,pow*v) for k,v in cls.units.items()]))
     
     def __reduce__(cls):
@@ -213,7 +215,7 @@ class Unitless(Derived):
     units = {}
     
     def __new__(cls, value):
-        return value #Unitless things get unwrapped
+        return value * cls.scale #Unitless things get unwrapped
 
 UnitMeta._unit_type_reg[frozenset([])] = Unitless
 UnitMeta.BaseUnit = BaseUnit
