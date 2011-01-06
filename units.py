@@ -38,8 +38,8 @@ class Decimal_Float(decimal.Decimal):
     def __rmul__(self, other): return self._do_op(other, operator.mul, r=True)
     def __rdiv__(self, other): return self._do_op(other, operator.div, r=True)
     
-    def __pow__(self, other):
-        if self%1 == 0 and other%1 == 0:
+    def __pow__(self, other): 
+        if self%1 == 0 and other%1 == 0 and other > 0:
             return self.__class__(int(int(self)**int(other)))
         if other%1 == 0:
             o = other if other > 0 else -other
@@ -86,6 +86,8 @@ def unit(scale, units):
             name = "/"+denominator
     else:
         name = "*"+numerator
+    if scale != 1:
+        name = "*("+str(scale)+")"+name
     return UnitMeta(name, (Derived,), {"units":units, "scale":scale})
 
 class UnitMeta(type):
@@ -215,20 +217,45 @@ class Unitless(Derived):
 
 UnitMeta._unit_type_reg[frozenset([])] = Unitless
 UnitMeta.BaseUnit = BaseUnit
-    
+
+scales = (
+    ("kilo" , "k", Decimal_Float('1e3'  )),
+    ("milli", "m", Decimal_Float('1e-3' )),
+    ("micro", "u", Decimal_Float('1e-6' )),
+    ("nano" , "n", Decimal_Float('1e-9' )),
+    ("pico" , "p", Decimal_Float('1e-12')),
+    ("femto", "f", Decimal_Float('1e-15')),
+    )
+
+def scale_unit(unit):
+    for name, abbr, scale in scales:
+        newunit = UnitMeta(
+            name+unit.__name__,
+            (Derived,),
+            {
+                "scale": scale*unit.scale,
+                "units": unit.units,
+                "abbreviation": abbr+unit.abbreviation
+            }
+        )
+        globals()[newunit.__name__] = newunit
+        globals()[newunit.abbreviation] = newunit
+
 class meter   (BaseUnit): abbreviation = "m"
 class second  (BaseUnit): abbreviation = "s"
-class kilogram(BaseUnit): abbreviation = "kg"
+class gram    (BaseUnit): abbreviation = "g"
 class Ampere  (BaseUnit): abbreviation = "A"
 class mole    (BaseUnit): abbreviation = "mol"
 class kelvin  (BaseUnit): abbreviation = "K" 
 class candela (BaseUnit): abbreviation = "cd"
-m = meter; s = second; kg = kilogram; A = Ampere; mol = mole
+m = meter; s = second; g = gram; A = Ampere; mol = mole
 K = kelvin; cd = candela
 
-class Newton(Derived):
-    units = {kilogram:1, meter:1, second:-2}
-    abbreviation = "N"
+for u in UnitMeta._unit_type_reg.values():
+    if hasattr(u, "abbreviation"):
+        scale_unit(u)
+
+Newton = kg * m / s**2; Newton.__name__ = "Newton"; Newton.abbreviation = "N"
 N = Newton
 Joule   = N * m  ; Joule  .__name__ = "Joule"  ; Joule  .abbreviation = "J"
 J = Joule
@@ -237,22 +264,6 @@ W = Watt
 Coloumb = A * s  ; Coloumb.__name__ = "Coloumb"; Coloumb.abbreviation = "C"
 C = Coloumb
 
-def make_scaled_units():
-    scale = Decimal_Float(1)
-    scaled_units = [u for u in UnitMeta._unit_type_reg.values()\
-                    if hasattr(u, "abbreviation")]
-    for s, a in ("milli", "m"), ("micro", "u"), ("nano", "n"), ("femto", "f"),\
-                ("pico", "p"):
-        scale /= Decimal_Float(1000)
-        for unit in scaled_units:
-            newunit = UnitMeta(s+unit.__name__, (Derived,),{
-                "scale": scale,
-                "units": unit.units,
-                "abbreviation" : a+unit.abbreviation,
-                })
-            globals()[newunit.__name__] = newunit
-            globals()[newunit.abbreviation] = newunit
-make_scaled_units()
     
 
 class minute(Derived):
