@@ -1,4 +1,57 @@
 import collections
+import decimal
+import operator
+import math
+
+def bits(n):
+    mask = 1<<int(math.floor(math.log(n, 2)))
+    while mask != 0:
+        yield 1 if mask & n else 0
+        mask >>= 1
+
+class Decimal_Float(decimal.Decimal):
+    '''
+    This class is a value that doesn't know if it should be a Decimal or a float
+    yet.  The first thing that touches it with an arithmetic operation will
+    decide for it.
+    '''
+    def _do_op(self, other, op, r=False):
+        #if this is "right side" operation, reverse arg order
+        _op = (lambda a,b: op(b,a)) if r else op
+        if isinstance(other, self.__class__):
+            return self.__class__(_op(decimal.Decimal(self), other))
+        if isinstance(other, decimal.Decimal):
+            return _op(decimal.Decimal(self), other)
+        if other%1 == 0 and self%1 == 0:
+            return _op(int(self), other)
+        return _op(float(self), other)
+    
+    def __add__(self, other): return self._do_op(other, operator.add)
+    def __sub__(self, other): return self._do_op(other, operator.sub)
+    def __mul__(self, other): return self._do_op(other, operator.mul)
+    def __div__(self, other): return self._do_op(other, operator.div)
+    def __gt__(self, other): return self._do_op(other, operator.gt)
+    def __lt__(self, other): return self._do_op(other, operator.lt)
+    
+    def __radd__(self, other): return self._do_op(other, operator.add, r=True)
+    def __rsub__(self, other): return self._do_op(other, operator.sub, r=True)
+    def __rmul__(self, other): return self._do_op(other, operator.mul, r=True)
+    def __rdiv__(self, other): return self._do_op(other, operator.div, r=True)
+    
+    def __pow__(self, other):
+        if self%1 == 0 and other%1 == 0:
+            return self.__class__(int(int(self)**int(other)))
+        if other%1 == 0:
+            o = other if other > 0 else -other
+            acc = self.__class__(1)
+            if other == 0: return acc
+            for b in bits(int(o)):
+                acc *= acc
+                if b: acc *= self
+            return acc if other > 0 else self.__class__(1)/acc
+        return float(self)**other
+    
+    def __repr__(self): return "Decimal_Float('"+str(self)+"')"
 
 def simplify(a, b):
     res = collections.defaultdict(int, a)
@@ -15,7 +68,7 @@ def invert(u):
         res[k] *= -1
     return res
 
-def unit(units):
+def unit(scale, units):
     num = [(k,v) for k,v in units.items() if v > 0]
     den = [(k,v) for k,v in units.items() if v < 0]
     numerator = "*".join([k.abbrev()+("**"+str(v) if v != 1 else "")
@@ -33,7 +86,7 @@ def unit(units):
             name = "/"+denominator
     else:
         name = "*"+numerator
-    return UnitMeta(name, (Derived,), {"units":units})
+    return UnitMeta(name, (Derived,), {"units":units, "scale":scale})
 
 class UnitMeta(type):
     BaseUnit = None #breaking circular reference
@@ -44,21 +97,27 @@ class UnitMeta(type):
             return type.__new__(cls, name, bases, attr)
         if cls.BaseUnit in bases: #creating a new base unit
             newcls = type.__new__(cls, name, bases, attr)
-            newcls.units = getattr(cls, "units", {})
+            newcls.units = {}
             newcls.units[newcls] = 1
-            key = frozenset(newcls.units.items())
+            key = newcls._scale, frozenset(newcls.units.items())
             cls._unit_type_reg[key] = newcls
+        elif attr["units"] == {}:
+            return attr["scale"]
         else: #otherwise, check for already created
-            key = frozenset(attr["units"].items())
+            attr.setdefault("scale", Decimal_Float(1))
+            key = attr["scale"], frozenset(attr["units"].items())
             if key not in cls._unit_type_reg:
                 cls._unit_type_reg[key] = type.__new__(cls, name, bases, attr)
         return cls._unit_type_reg[key]
     
     def __rmul__(cls, other):
         if isinstance(other, (cls.BaseUnit, UnitMeta)):
-            newcls = unit(simplify(cls.units, other.units))
+            newcls = unit(cls.scale * other.scale, simplify(cls.units, other.units))
             if isinstance(other, cls.BaseUnit):
-                return newcls(other.value)
+                if isinstance(newcls, UnitMeta):
+                    return newcls(other.value)
+                else:
+                    return newcls * other.value
             return newcls
         return cls(other)
 
@@ -71,7 +130,7 @@ class UnitMeta(type):
         return (cls**-1)*other
     
     def __pow__(cls, pow):
-        return unit(dict([(k,pow*v) for k,v in cls.units.items()]))
+        return unit(cls.scale**pow, dict([(k,pow*v) for k,v in cls.units.items()]))
     
     def __reduce__(cls):
         #this will work once issue 7689 is fixed http://bugs.python.org/issue7689
@@ -82,10 +141,21 @@ def unit_unpickler(value, *a):
 
 class BaseUnit(object):
     __metaclass__ = UnitMeta
+    scale = Decimal_Float(1)
     
     @classmethod
     def abbrev(cls):
         return getattr(cls, "abbreviation", cls.__name__)
+    
+    @classmethod
+    def _scale(cls, other):
+        '''
+        _scale another Unit instance's value to be in terms of this Unit instance
+        '''
+        if cls.units == other.units:
+            factor = other.scale / cls.scale
+            return other.value*factor
+        raise TypeError() #figure out a good error message
     
     def __init__(self, value):
         self.value = value
@@ -93,16 +163,20 @@ class BaseUnit(object):
     def __add__(self, other):
         if self.__class__ == other.__class__:
             return self.__class__(self.value + other.value)
+        elif self.units == other.units:
+            return self.__class__(self.value + self._scale(other))
         raise TypeError() #figure out good error message
     
+    def __neg__(self):
+        return self.__class__(-self.value)
+    
     def __sub__(self, other):
-        if self.__class__ == other.__class__:
-            return self.__class__(self.value - other.value)
-        raise TypeError() #figure out good error message
+        self + (-other)
     
     def __mul__(self, other):
         if isinstance(other, BaseUnit):
-            return (self.__class__ * other.__class__)(self.value*other.value)
+            return (self.__class__ * other.__class__) *\
+                (self.value * self._scale(other.value))
         elif isinstance(other, UnitMeta):
             return UnitMeta.__mul__(other, self)
         return self.__class__(self.value*other)
@@ -162,3 +236,26 @@ Watt    = J / s  ; Watt   .__name__ = "Watt"   ; Watt   .abbreviation = "W"
 W = Watt
 Coloumb = A * s  ; Coloumb.__name__ = "Coloumb"; Coloumb.abbreviation = "C"
 C = Coloumb
+
+def make_scaled_units():
+    scale = Decimal_Float(1)
+    scaled_units = [u for u in UnitMeta._unit_type_reg.values()\
+                    if hasattr(u, "abbreviation")]
+    for s, a in ("milli", "m"), ("micro", "u"), ("nano", "n"), ("femto", "f"),\
+                ("pico", "p"):
+        scale /= Decimal_Float(1000)
+        for unit in scaled_units:
+            newunit = UnitMeta(s+unit.__name__, (Derived,),{
+                "scale": scale,
+                "units": unit.units,
+                "abbreviation" : a+unit.abbreviation,
+                })
+            globals()[newunit.__name__] = newunit
+            globals()[newunit.abbreviation] = newunit
+make_scaled_units()
+    
+
+class minute(Derived):
+    units = {second: 1}
+    scale = Decimal_Float(60)
+
