@@ -265,7 +265,35 @@ Watt    = J / s  ; Watt   .__name__ = "Watt"   ; Watt   .abbreviation = "W"
 W = Watt
 Coloumb = A * s  ; Coloumb.__name__ = "Coloumb"; Coloumb.abbreviation = "C"
 C = Coloumb
-
+Hertz = s**-1      ; Hertz .__name__ = "Hertz"   ; Hertz  .abbreviation = "Hz"
+Hz = Hertz
+Pascal = N / m**2  ; Pascal .__name__ = "Hertz"  ; Pascal .abbreviation = "Pa"
+Pa = Pascal
+Volt = J / C       ; Volt   .__name__ = "Volt"   ; Volt   .abbreviation = "V"
+V = Volt
+Ohm = V / A        ; Ohm    .__name__ = "Ohm"    ; Ohm    .abbreviation = u"\u03A9"
+O = Ohm
+Farad = C / V      ; Farad  .__name__ = "Farad"  ; Farad  .abbreviation = "F"
+F = Farad
+#conductance
+Siemens = O**-1    ; Siemens.__name__ = "Siemens"; Siemens.abbreviation = "S"
+S = Siemens
+#magnetic flux
+Weber = J / A      ; Weber  .__name__ = "Weber"  ; Weber  .abbreviation = "Wb"
+Wb = Weber
+Tesla = Wb / m**2  ; Teslas .__name__ = "Tesla"  ; Tesla  .abbreviation = "T"
+T = Tesla
+Henry = V * s / A  ; Henry  .__name__ = "Henry"  ; Henry  .abbreviation = "H"
+H = Henry
+#luminous flux
+Lumen = cd * m**-1 ; Lumen  .__name__ = "Lumen"  ; Lumen  .abbreviation = "lm"
+lm = Lumen
+#illuminance
+Lux = lm / m**2    ; Lux    .__name__ = "Lux"    ; Lux    .abbreviation = "lx"
+lx = Lux
+#catalytic activity
+Katal = mol / s    ; Katal  .__name__ = "Katal"  ; Katal  .abbreviation = "kat"
+kat = Katal
     
 
 class minute(Derived):
