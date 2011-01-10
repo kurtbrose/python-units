@@ -221,6 +221,10 @@ UnitMeta._unit_type_reg[frozenset([])] = Unitless
 UnitMeta.BaseUnit = BaseUnit
 
 scales = (
+    ("peta" , "P", Decimal_Float('1e15'))
+    ("tera" , "T", Decimal_Float('1e12'))
+    ("giga" , "G", Decimal_Float('1e9'))
+    ("mega" , "M", Decimal_Float('1e6'))
     ("kilo" , "k", Decimal_Float('1e3'  )),
     ("milli", "m", Decimal_Float('1e-3' )),
     ("micro", "u", Decimal_Float('1e-6' )),
@@ -246,57 +250,78 @@ def scale_unit(unit):
 class meter   (BaseUnit): abbreviation = "m"
 class second  (BaseUnit): abbreviation = "s"
 class gram    (BaseUnit): abbreviation = "g"
-class Ampere  (BaseUnit): abbreviation = "A"
+class ampere  (BaseUnit): abbreviation = "A"
 class mole    (BaseUnit): abbreviation = "mol"
 class kelvin  (BaseUnit): abbreviation = "K" 
 class candela (BaseUnit): abbreviation = "cd"
-m = meter; s = second; g = gram; A = Ampere; mol = mole
+m = meter; s = second; g = gram; A = ampere; mol = mole
 K = kelvin; cd = candela
 
 for u in UnitMeta._unit_type_reg.values():
     if hasattr(u, "abbreviation"):
         scale_unit(u)
 
-Newton = kg * m / s**2; Newton.__name__ = "Newton"; Newton.abbreviation = "N"
-N = Newton
-Joule   = N * m  ; Joule  .__name__ = "Joule"  ; Joule  .abbreviation = "J"
-J = Joule
-Watt    = J / s  ; Watt   .__name__ = "Watt"   ; Watt   .abbreviation = "W"
+newton = kg * m / s**2; newton.__name__ = "newton"; newton.abbreviation = "N"
+N = newton
+joule   = N * m    ; joule  .__name__ = "joule"   ; joule  .abbreviation = "J"
+J = joule
+watt    = J / s    ; watt   .__name__ = "watt"    ; watt   .abbreviation = "W"
 W = Watt
-Coloumb = A * s  ; Coloumb.__name__ = "Coloumb"; Coloumb.abbreviation = "C"
-C = Coloumb
-Hertz = s**-1      ; Hertz .__name__ = "Hertz"   ; Hertz  .abbreviation = "Hz"
-Hz = Hertz
-Pascal = N / m**2  ; Pascal .__name__ = "Hertz"  ; Pascal .abbreviation = "Pa"
-Pa = Pascal
-Volt = J / C       ; Volt   .__name__ = "Volt"   ; Volt   .abbreviation = "V"
-V = Volt
-Ohm = V / A        ; Ohm    .__name__ = "Ohm"    ; Ohm    .abbreviation = u"\u03A9"
-O = Ohm
-Farad = C / V      ; Farad  .__name__ = "Farad"  ; Farad  .abbreviation = "F"
-F = Farad
+coloumb = A * s    ; coloumb.__name__ = "coloumb" ; coloumb.abbreviation = "C"
+C = coloumb
+hertz = s**-1      ; hertz  .__name__ = "hertz"   ; hertz  .abbreviation = "Hz"
+Hz = hertz
+pascal = N / m**2  ; pascal .__name__ = "pascal"  ; pascal .abbreviation = "Pa"
+Pa = pascal
+volt = J / C       ; volt   .__name__ = "volt"    ; volt   .abbreviation = "V"
+V = volt
+ohm = V / A        ; ohm    .__name__ = "ohm"     ; ohm    .abbreviation = u"\u03A9"
+O = ohm
+farad = C / V      ; farad  .__name__ = "farad"   ; farad  .abbreviation = "F"
+F = farad
 #conductance
-Siemens = O**-1    ; Siemens.__name__ = "Siemens"; Siemens.abbreviation = "S"
-S = Siemens
+siemens = O**-1    ; siemens.__name__ = "siemens" ; siemens.abbreviation = "S"
+S = siemens
 #magnetic flux
-Weber = J / A      ; Weber  .__name__ = "Weber"  ; Weber  .abbreviation = "Wb"
-Wb = Weber
-Tesla = Wb / m**2  ; Teslas .__name__ = "Tesla"  ; Tesla  .abbreviation = "T"
-T = Tesla
-Henry = V * s / A  ; Henry  .__name__ = "Henry"  ; Henry  .abbreviation = "H"
-H = Henry
+weber = J / A      ; weber  .__name__ = "weber"   ; weber  .abbreviation = "Wb"
+Wb = weber
+tesla = Wb / m**2  ; tesla  .__name__ = "tesla"   ; tesla  .abbreviation = "T"
+T = tesla
+henry = V * s / A  ; henry  .__name__ = "henry"   ; henry  .abbreviation = "H"
+H = henry
 #luminous flux
-Lumen = cd * m**-1 ; Lumen  .__name__ = "Lumen"  ; Lumen  .abbreviation = "lm"
-lm = Lumen
+lumen = cd * m**-1 ; lumen  .__name__ = "lumen"   ; lumen  .abbreviation = "lm"
+lm = lumen
 #illuminance
-Lux = lm / m**2    ; Lux    .__name__ = "Lux"    ; Lux    .abbreviation = "lx"
-lx = Lux
+lux = lm / m**2    ; lux    .__name__ = "lux"     ; lux    .abbreviation = "lx"
+lx = lux
 #catalytic activity
-Katal = mol / s    ; Katal  .__name__ = "Katal"  ; Katal  .abbreviation = "kat"
-kat = Katal
+katal = mol / s    ; katal  .__name__ = "katal"   ; katal  .abbreviation = "kat"
+kat = katal
     
 
 class minute(Derived):
     units = {second: 1}
     scale = Decimal_Float(60)
+    
+def scaled_unit(name, abbr, base_unit, scale_factor):
+    return UnitMeta(
+        name,
+        (Derived,),
+        {
+            "abbreviation" : abbr,
+            "units" : base_unit.units,
+            "scale" : base_unit.scale * Decimal_Float(scale_factor)
+        })
 
+liter    = scaled_unit("liter", "L", cm**3, 1000)
+
+inch     = scaled_unit("inches", "in", cm, 2.54)
+
+feet     = scaled_unit("feet", "ft", inch, 12)
+
+hour     = scaled_unit("hour", "h", minute, 60)
+
+angstrom = scaled_unit("meter", "ang", m, 10^-10)
+
+mile     = scaled_unit("mile", "mile", feet, 5280)
