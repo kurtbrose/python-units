@@ -221,11 +221,12 @@ UnitMeta._unit_type_reg[frozenset([])] = Unitless
 UnitMeta.BaseUnit = BaseUnit
 
 scales = (
-    ("peta" , "P", Decimal_Float('1e15'))
-    ("tera" , "T", Decimal_Float('1e12'))
-    ("giga" , "G", Decimal_Float('1e9'))
-    ("mega" , "M", Decimal_Float('1e6'))
+    ("peta" , "P", Decimal_Float('1e15' )),
+    ("tera" , "T", Decimal_Float('1e12' )),
+    ("giga" , "G", Decimal_Float('1e9'  )),
+    ("mega" , "M", Decimal_Float('1e6'  )),
     ("kilo" , "k", Decimal_Float('1e3'  )),
+    ("centi", "c", Decimal_Float('1e2'  )),
     ("milli", "m", Decimal_Float('1e-3' )),
     ("micro", "u", Decimal_Float('1e-6' )),
     ("nano" , "n", Decimal_Float('1e-9' )),
@@ -266,7 +267,7 @@ N = newton
 joule   = N * m    ; joule  .__name__ = "joule"   ; joule  .abbreviation = "J"
 J = joule
 watt    = J / s    ; watt   .__name__ = "watt"    ; watt   .abbreviation = "W"
-W = Watt
+W = watt
 coloumb = A * s    ; coloumb.__name__ = "coloumb" ; coloumb.abbreviation = "C"
 C = coloumb
 hertz = s**-1      ; hertz  .__name__ = "hertz"   ; hertz  .abbreviation = "Hz"
@@ -314,14 +315,14 @@ def scaled_unit(name, abbr, base_unit, scale_factor):
             "scale" : base_unit.scale * Decimal_Float(scale_factor)
         })
 
-liter    = scaled_unit("liter", "L", cm**3, 1000)
+liter    = scaled_unit("liter", "L", cm**3, Decimal_Float("1000"))
 
-inch     = scaled_unit("inches", "in", cm, 2.54)
+inch     = scaled_unit("inches", "_in", cm, Decimal_Float("2.54"))
 
-feet     = scaled_unit("feet", "ft", inch, 12)
+feet     = scaled_unit("feet", "ft", inch, Decimal_Float("12"))
 
-hour     = scaled_unit("hour", "h", minute, 60)
+hour     = scaled_unit("hour", "h", minute, Decimal_Float("60"))
 
-angstrom = scaled_unit("meter", "ang", m, 10^-10)
+angstrom = scaled_unit("meter", "ang", m, Decimal_Float("1e-10"))
 
-mile     = scaled_unit("mile", "mile", feet, 5280)
+mile     = scaled_unit("mile", "mile", feet, Decimal_Float("5280"))
